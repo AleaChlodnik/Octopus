@@ -1,0 +1,37 @@
+- name: Upload application
+  ansible.builtin.copy:
+    src: "../../../application.zip"
+    dest: "/application.zip"
+  become: true
+
+- name: Unzip application
+  ansible.builtin.unarchive:
+    src: "/application.zip"
+    dest: "/app/application"
+    remote_src: true
+  become: true
+
+- name: Install dependencies
+  command: npm install
+  args:
+    chdir: "/app/application"
+  become: true
+
+- name: Upload config.json template
+  template:
+    src: ../../../config.json.j2
+    dest: ../../../config.json
+  notify: Reload systemd
+
+# - name: Upload application files
+#   copy:
+#     src: /path/to/local/application
+#     dest: /path/to/remote/application
+#   notify: Restart my-awesome-app.service
+
+# - name: Restart my-awesome-app.service
+#   systemd:
+#     daemon_reload: yes
+#     state: restarted
+#     name: my-awesome-app.service
+#   listen: "Restart my-awesome-app.service"

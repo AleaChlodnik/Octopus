@@ -1,0 +1,10 @@
+- name: Install Node.js and npm
+  apt:
+    name: "{{ item }}"
+    state: present
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  with_items:
+    - nodejs
+    - npm

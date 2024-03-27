@@ -1,0 +1,29 @@
+- name: Update OS packages
+  package:
+    name: '*'
+    state: latest
+  become: true
+
+- name: Install essential packages
+  package:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - git
+    - curl
+    - unzip
+    - zsh
+
+- name: Set timezone
+  timezone:
+    name: Europe/Paris
+  become: true
+
+- name: Set zsh as root shell
+  user:
+    name: root
+    shell: /usr/bin/zsh
+  become: true
