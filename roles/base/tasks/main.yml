@@ -1,0 +1,7 @@
+- name: Install essential packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - git
+      - curl

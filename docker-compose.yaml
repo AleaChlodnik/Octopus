@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  redis:
+    container_name: redis
+    build: .
+  postgres:
+    container_name: postgresql
+    build: .
+  poll:
+    container_name: poll
+    build: .
+  result:
+    container_name: result
+    build: .
+  worker:
+    container_name: worker
+    build: .
