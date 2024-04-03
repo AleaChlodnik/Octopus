@@ -1,28 +1,79 @@
-- name: install PostgreSQL16 and psql tool
-  package:
+- name: Import the repository signing key
+  ansible.builtin.apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL's repository
+  ansible.builtin.apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+    state: present
+
+- name: Install PostgreSQL 16
+  ansible.builtin.apt:
+    name: postgresql-16
+    state: present
+    update_cache: yes
+
+- name: Install PostgreSQL
+  apt:
     name: "{{ item }}"
-    state: present
-  become: true
-  loop:
-    - postgresql-16
-    - postgresql-contrib-16
-    - postgresql-server-dev-16
-    - postgresql-client-16
-    - postgresql-doc-16
-    - postgresql-plpython3
+  with_items:
+    - postgresql-client
+    - python3-psycopg2 # psycopg2 is a PostgreSQL adapter for Python
+    - acl # setfacl is a utility for manipulating the access control lists (ACLs) of files
 
-- name: create user
+- name: Set up postgresql authentication
+  copy:
+    src: ../files/pg_hba.conf
+    dest: /etc/postgresql/16/main/pg_hba.conf
+
+- name: Set up postgresql schema
+  copy:
+    src: ../files/schema.sql
+    dest: /tmp/schema.sql
+
+- name: Ensure the postgresql is started
+  systemd_service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Reload PostgreSQL to apply pg_hba.conf changes
+  ansible.builtin.systemd:
+    name: postgresql
+    state: restarted
+
+- name: Create database user
+  become: yes
+  become_user: postgres
   postgresql_user:
-    db: postgres
-    name: "{{user_name_postgresql}}"
-    password: "{{user_password_postgresql}}"
-    priv: "*.*:ALL"
+    name: "{{ user_name_postgresql }}"
+    password: "{{ user_password_postgresql }}"
+    role_attr_flags: NOSUPERUSER,NOCREATEDB
     state: present
-  become: true
 
-- name: create database
+- name: Create the database
+  become: yes
+  become_user: postgres
   postgresql_db:
-    name: "{{DB_NAME}}"
-    owner: "{{USER_NAME_POSTGRESQL}}"
+    name: "{{ db_name }}"
+    owner: "{{ user_name_postgresql }}"
     state: present
-  become: true
+
+- name: Read the schema SQL script content
+  ansible.builtin.slurp:
+    src: /tmp/schema.sql
+  register: schema_sql_content
+
+- name: Decode the schema SQL script content
+  ansible.builtin.set_fact:
+    schema_sql: "{{ schema_sql_content['content'] | b64decode }}"
+
+- name: Import the schema SQL script
+  become: yes
+  become_user: postgres
+  ansible.builtin.postgresql_query:
+    db: "{{ db_name }}"
+    query: "{{ schema_sql }}"
+    login_user: "{{ user_name_postgresql }}"
+    login_password: "{{ user_password_postgresql }}"

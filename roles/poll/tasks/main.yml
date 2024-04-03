@@ -1,25 +1,62 @@
-- name: create poll directory for ansible
-  file:
+- name: Ensure application directory exists
+  ansible.builtin.file:
     path: /var/www/poll
     state: directory
-    mode: 0755
-  become: true
+    owner: www-data
+    group: www-data
 
-- name: extract poll.tar to poll directory
-  unarchive:
-    src: /tmp/poll.tar
+- name: Extract poll application
+  ansible.builtin.unarchive:
+    src: poll.tar
     dest: /var/www/poll
-    remote_src: yes
-  become: true
+    owner: www-data
+    group: www-data
 
-- name: install dependencies
-  pip:
+- name: Install Python venv package
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python3-venv
+    - acl
+
+- name: Create a virtual environment for the app
+  become_user: www-data
+  ansible.builtin.command:
+    cmd: python3 -m venv /var/www/poll/venv
+  args:
+    creates: /var/www/poll/venv
+
+- name: Check if requirements.txt exists
+  ansible.builtin.stat:
+    path: /var/www/poll/requirements.txt
+  register: requirements_file
+
+- name: Install Python dependencies if requirements.txt exists
+  become_user: www-data
+  ansible.builtin.pip:
     requirements: /var/www/poll/requirements.txt
+    virtualenv: /var/www/poll/venv
+  when: requirements_file.stat.exists
 
-- name: runs the poll web client
-  systemd:
-    name: poll
-    enabled: yes
+- name: Upload systemd service file
+  ansible.builtin.copy:
+    src: ../files/poll.service
+    dest: /etc/systemd/system/poll.service
+
+- name: Change file ownership, group and permissions
+  ansible.builtin.file:
+    path: /etc/systemd/system/poll.service
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: environment variables
+  ansible.builtin.command: echo "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}" >> /var/www/poll/.env
+
+- name: Ensure result service is running
+  ansible.builtin.systemd:
+    name: poll.service
     state: started
-    daemon_reload: yes
-  become: true
+    daemon_reload: true
+    enabled: true

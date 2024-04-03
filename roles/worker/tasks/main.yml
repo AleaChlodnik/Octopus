@@ -1,14 +1,14 @@
-- name : create worker directory for ansible
+- name: create worker directory for ansible
   file:
-    path: "{{app_path}}"
+    path: "{{ app_path }}"
     state: directory
     mode: 0755
   become: true
 
 - name: extract worker.tar to worker directory
   unarchive:
-    src: "{{app_path}}/worker.tar"
-    dest: "{{app_path}}"
+    src: "{{ app_path }}/worker.tar"
+    dest: "{{ app_path }}"
     remote_src: yes
   become: true
 
@@ -19,19 +19,17 @@
     mode: 0644
   become: true
 
-- name : Install dependencies
+- name: Install dependencies
   apt:
-    name: "{{item}}"
+    name: "{{ item }}"
     state: present
-  with_items:
+  loop:
     - java-21-openjdk
     - maven
 
-- name: build worker using
-  # changer pour enlever command
-  command: "ansible-playbook /var/www/worker/worker.yml"
+- name: build worker using Maven
+  shell: "cd {{ app_path }}/worker && mvn clean install"
   become: true
-
 
 - name: run worker using systemd
   systemd:

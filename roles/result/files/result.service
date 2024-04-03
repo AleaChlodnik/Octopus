@@ -1,0 +1,14 @@
+[Unit]
+Description=Result Web Client Service
+After=network.target
+
+[Service]
+Type=simple
+User=your_username
+Group=your_groupname
+WorkingDirectory=/path/to/your/application
+ExecStart=/usr/bin/node /path/to/your/application/main.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

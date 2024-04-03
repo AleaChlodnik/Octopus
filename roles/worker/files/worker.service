@@ -1,0 +1,14 @@
+[Unit]
+Description=Worker Service
+After=network.target
+
+[Service]
+Type=simple
+User=your_username
+Group=your_groupname
+WorkingDirectory=/path/to/your/application
+ExecStart=/usr/bin/java -jar /path/to/your/application/worker.jar
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

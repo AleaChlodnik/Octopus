@@ -6,7 +6,7 @@
 
 - name: setup redis
   copy:
-    src: redis.service
-    dest: /etc/systemd/system/redis.service
+    src: redis.conf
+    dest: /etc/redis.conf
     mode: 0644
   become: true

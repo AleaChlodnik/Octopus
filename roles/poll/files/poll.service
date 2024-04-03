@@ -1,0 +1,13 @@
+[Unit]
+Description=Poll Flask Application
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/poll
+ExecStart=/bin/bash -c 'source /var/www/poll/venv/bin/activate && python3 /var/www/poll/wsgi.py'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
