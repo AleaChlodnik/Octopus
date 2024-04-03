@@ -1,0 +1,36 @@
+- name: create result directory for ansible
+  file:
+    path: "{{app_path}}"
+    state: directory
+    mode: 0755
+  become: true
+
+- name: extract result.tar to result directory
+  unarchive:
+    src: "{{app_path}}/result.tar"
+    dest: "{{app_path}}"
+    remote_src: yes
+  become: true
+
+- name: upload result service
+  copy:
+    src: result.service
+    dest: /etc/systemd/system/result.service
+    mode: 0644
+  become: true
+
+- name: install dependencies
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - nodejs
+    - npm
+
+- name: runs the result web client
+  systemd:
+    name: result
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true

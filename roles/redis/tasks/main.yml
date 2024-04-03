@@ -1,0 +1,12 @@
+- name: install redis
+  package:
+    name: redis
+    state: present
+  become: true
+
+- name: setup redis
+  copy:
+    src: redis.service
+    dest: /etc/systemd/system/redis.service
+    mode: 0644
+  become: true

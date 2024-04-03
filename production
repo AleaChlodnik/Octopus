@@ -1,0 +1,5 @@
+[linodes]
+your_linode_ip ansible_ssh_user=your_ssh_user ansible_ssh_private_key=~/.ssh/id_rsa
+
+[linodes:vars]
+# Define common variables for all Linode servers, if needed

@@ -1,7 +1,12 @@
 - name: Install essential packages
   apt:
-    name: "{{ packages }}"
-  vars:
-    packages:
-      - git
-      - curl
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - git
+  become: true
+  
+
+- name: configure instance
+  include_role:
+    name: base

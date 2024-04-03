@@ -1,0 +1,28 @@
+- name: install PostgreSQL16 and psql tool
+  package:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - postgresql-16
+    - postgresql-contrib-16
+    - postgresql-server-dev-16
+    - postgresql-client-16
+    - postgresql-doc-16
+    - postgresql-plpython3
+
+- name: create user
+  postgresql_user:
+    db: postgres
+    name: "{{user_name_postgresql}}"
+    password: "{{user_password_postgresql}}"
+    priv: "*.*:ALL"
+    state: present
+  become: true
+
+- name: create database
+  postgresql_db:
+    name: "{{DB_NAME}}"
+    owner: "{{USER_NAME_POSTGRESQL}}"
+    state: present
+  become: true

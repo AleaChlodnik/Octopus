@@ -1,0 +1,41 @@
+- name : create worker directory for ansible
+  file:
+    path: "{{app_path}}"
+    state: directory
+    mode: 0755
+  become: true
+
+- name: extract worker.tar to worker directory
+  unarchive:
+    src: "{{app_path}}/worker.tar"
+    dest: "{{app_path}}"
+    remote_src: yes
+  become: true
+
+- name: Uploads worker service
+  copy:
+    src: worker.service
+    dest: /etc/systemd/system/worker.service
+    mode: 0644
+  become: true
+
+- name : Install dependencies
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - java-1.8.0-openjdk
+    - maven
+
+- name: build worker using
+  command: "ansible-playbook /var/www/worker/worker.yml"
+  become: true
+
+
+- name: run worker using systemd
+  systemd:
+    name: worker
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true

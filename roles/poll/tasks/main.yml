@@ -1,0 +1,25 @@
+- name: create poll directory for ansible
+  file:
+    path: /var/www/poll
+    state: directory
+    mode: 0755
+  become: true
+
+- name: extract poll.tar to poll directory
+  unarchive:
+    src: /tmp/poll.tar
+    dest: /var/www/poll
+    remote_src: yes
+  become: true
+
+- name: install dependencies
+  pip:
+    requirements: /var/www/poll/requirements.txt
+
+- name: runs the poll web client
+  systemd:
+    name: poll
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
