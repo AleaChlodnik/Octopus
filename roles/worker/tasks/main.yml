@@ -24,7 +24,7 @@
     name: "{{item}}"
     state: present
   with_items:
-    - java-1.8.0-openjdk
+    - java-21-openjdk
     - maven
 
 - name: build worker using
