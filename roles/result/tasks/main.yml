@@ -1,16 +1,16 @@
 - name: create result directory for ansible
   file:
-    path: "{{ app_path }}"
+    path: /var/www/result
     state: directory
     mode: 0755
   become: true
 
-- name: extract result.tar to result directory
-  unarchive:
-    src: "{{ app_path }}/result.tar"
-    dest: "{{ app_path }}"
-    remote_src: yes
-  become: true
+- name: Extract result.tar
+  ansible.builtin.unarchive:
+    src: result.tar
+    dest: /var/www/result
+    owner: www-data
+    group: www-data
 
 - name: upload result service
   copy:
@@ -18,3 +18,23 @@
     dest: /etc/systemd/system/result.service
     mode: 0644
   become: true
+
+- name: install npm & nodejs
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nodejs
+    - npm
+
+- name: install npm packages
+  command: npm install
+  args:
+    chdir: /var/www/result
+
+- name: Ensure service running
+  ansible.builtin.systemd:
+    name: result.service
+    state: started
+    daemon_reload: true
+    enabled: true
