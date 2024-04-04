@@ -1,4 +1,4 @@
-- name: Ensure application directory exists
+- name: Check if directory exists
   ansible.builtin.file:
     path: /var/www/worker
     state: directory
@@ -25,7 +25,7 @@
     state: present
 
 - name: Download Java 21
-  command: wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
+  ansible.builtin.command: wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
   args:
     chdir: /var/www/worker
 
@@ -34,10 +34,11 @@
   args:
     chdir: /var/www/worker
 
-- name: Builds the worker.
-  command: mvn install -f /var/www/worker/pom.xml  # Specify the POM file directly; add debug output if needed
+- name: Build the worker
+  ansible.builtin.command: mvn clean install -f /var/www/worker/pom.xml
   args:
-    chdir: /var/www/worker/  # Set the working directory
+    chdir: /var/www/worker/
+
 
 - name: Upload systemd service file
   ansible.builtin.copy:

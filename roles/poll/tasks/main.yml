@@ -1,4 +1,4 @@
-- name: Ensure application directory exists
+- name: create directory for poll application
   ansible.builtin.file:
     path: /var/www/poll
     state: directory
@@ -20,7 +20,7 @@
     - python3-venv
     - acl
 
-- name: Create a virtual environment for the app
+- name: Create a virtual environment
   become_user: www-data
   ansible.builtin.command:
     cmd: python3 -m venv /var/www/poll/venv
@@ -45,10 +45,15 @@
     group: root
     mode: '0755'
 
-- name: environment variables
-  command: echo "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}" >> /var/www/poll/.env
+- name: Set REDIS_HOST environment variable in .env file
+  ansible.builtin.lineinfile:
+    path: /var/www/poll/.env
+    line: "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}"
+    create: yes
+    state: present
+  
 
-- name: Ensure result service is running
+- name: Ensure service is enabled and running
   ansible.builtin.systemd:
     name: poll.service
     state: started

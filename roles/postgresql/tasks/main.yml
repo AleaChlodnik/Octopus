@@ -1,4 +1,4 @@
-- name: Import the repository signing key
+- name: Import the repository
   ansible.builtin.apt_key:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
     state: present
@@ -14,7 +14,7 @@
     state: present
     update_cache: yes
 
-- name: Install PostgreSQL
+- name: Install PostgreSQL and other required packages
   apt:
     name: "{{ item }}"
   with_items:
@@ -22,7 +22,7 @@
     - python3-psycopg2 # psycopg2 is a PostgreSQL adapter for Python
     - acl # setfacl is a utility for manipulating the access control lists (ACLs) of files
 
-- name: Set up postgresql authentication
+- name: Setup postgresql authentication
   copy:
     src: ../files/pg_hba.conf
     dest: /etc/postgresql/16/main/pg_hba.conf
@@ -32,13 +32,13 @@
     src: ../files/schema.sql
     dest: /tmp/schema.sql
 
-- name: Ensure the postgresql is started
+- name:  start and enable postgresql
   systemd_service:
     name: postgresql
     state: started
     enabled: true
 
-- name: Reload PostgreSQL to apply pg_hba.conf changes
+- name: Reload PostgreSQL service
   ansible.builtin.systemd:
     name: postgresql
     state: restarted

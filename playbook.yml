@@ -19,6 +19,8 @@
     - poll
 
 - hosts: worker
+  collections:
+    - community.general
   become: true
   roles:
     - worker
