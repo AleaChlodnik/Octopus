@@ -1,16 +1,16 @@
-- name: create worker directory for ansible
-  file:
-    path: "{{ app_path }}"
+- name: Ensure application directory exists
+  ansible.builtin.file:
+    path: /var/www/worker
     state: directory
-    mode: 0755
-  become: true
+    owner: www-data
+    group: www-data
 
-- name: extract worker.tar to worker directory
-  unarchive:
-    src: "{{ app_path }}/worker.tar"
-    dest: "{{ app_path }}"
-    remote_src: yes
-  become: true
+- name: Extract worker application
+  ansible.builtin.unarchive:
+    src: worker.tar
+    dest: /var/www/worker
+    owner: www-data
+    group: www-data
 
 - name: Uploads worker service
   copy:
@@ -19,22 +19,34 @@
     mode: 0644
   become: true
 
-- name: Install dependencies
+- name: Install maven
   apt:
-    name: "{{ item }}"
+    name: maven
     state: present
-  loop:
-    - java-21-openjdk
-    - maven
 
-- name: build worker using Maven
-  shell: "cd {{ app_path }}/worker && mvn clean install"
-  become: true
+- name: Download Java 21
+  command: wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
+  args:
+    chdir: /var/www/worker
 
-- name: run worker using systemd
-  systemd:
-    name: worker
-    enabled: yes
+- name: Install Java 21
+  command: sudo dpkg -i jdk-21_linux-x64_bin.deb
+  args:
+    chdir: /var/www/worker
+
+- name: Builds the worker.
+  command: mvn install -f /var/www/worker/pom.xml  # Specify the POM file directly; add debug output if needed
+  args:
+    chdir: /var/www/worker/  # Set the working directory
+
+- name: Upload systemd service file
+  ansible.builtin.copy:
+    src: worker.service
+    dest: /etc/systemd/system/worker.service
+
+- name: Ensure service is enabled and running
+  ansible.builtin.systemd:
+    name: worker.service
     state: started
-    daemon_reload: yes
-  become: true
+    daemon_reload: true
+    enabled: true

@@ -27,17 +27,11 @@
   args:
     creates: /var/www/poll/venv
 
-- name: Check if requirements.txt exists
-  ansible.builtin.stat:
-    path: /var/www/poll/requirements.txt
-  register: requirements_file
-
-- name: Install Python dependencies if requirements.txt exists
+- name: Install Python dependencies
   become_user: www-data
   ansible.builtin.pip:
     requirements: /var/www/poll/requirements.txt
     virtualenv: /var/www/poll/venv
-  when: requirements_file.stat.exists
 
 - name: Upload systemd service file
   ansible.builtin.copy:
@@ -52,7 +46,7 @@
     mode: '0755'
 
 - name: environment variables
-  ansible.builtin.command: echo "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}" >> /var/www/poll/.env
+  command: echo "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}" >> /var/www/poll/.env
 
 - name: Ensure result service is running
   ansible.builtin.systemd:
