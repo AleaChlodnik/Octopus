@@ -1,8 +1,13 @@
-- name: install redis
-  package:
+- name: Install Redis
+  ansible.builtin.package:
     name: redis
     state: present
   become: true
+
+- name: check if redis.conf exists
+  stat:
+    path: /etc/redis.conf
+  register: redis_conf
 
 - name: setup redis
   copy:
@@ -10,3 +15,4 @@
     dest: /etc/redis.conf
     mode: 0644
   become: true
+  when: not redis_conf.stat.exists

@@ -19,18 +19,28 @@
     mode: 0644
   become: true
 
-- name: install npm & nodejs
-  apt:
-    name: "{{ item }}"
+- name: Install npm
+  ansible.builtin.apt:
+    name: npm
     state: present
-  with_items:
-    - nodejs
-    - npm
+    update_cache: yes
+
+- name: Install Node.js
+  ansible.builtin.apt:
+    name: nodejs
+    state: present
+    update_cache: yes
+
+- name: Check if npm packages are installed
+  ansible.builtin.stat:
+    path: /var/www/result/node_modules
+  register: npm_packages_check
 
 - name: install npm packages
   command: npm install
   args:
     chdir: /var/www/result
+  when: not npm_packages_check.stat.exists
 
 - name: Ensure service running
   ansible.builtin.systemd:

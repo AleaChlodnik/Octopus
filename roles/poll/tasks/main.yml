@@ -1,9 +1,20 @@
+- name: Check if directory for poll application exists
+  ansible.builtin.stat:
+    path: /var/www/poll
+  register: poll_directory
+
 - name: create directory for poll application
   ansible.builtin.file:
     path: /var/www/poll
     state: directory
     owner: www-data
     group: www-data
+  when: not poll_directory.stat.exists
+
+- name: Check if poll application has been extracted
+  ansible.builtin.stat:
+    path: /var/www/poll/somefile_from_poll_application
+  register: poll_extracted
 
 - name: Extract poll application
   ansible.builtin.unarchive:
@@ -11,6 +22,12 @@
     dest: /var/www/poll
     owner: www-data
     group: www-data
+  when: not poll_extracted.stat.exists
+
+- name: check if poll.service exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/poll.service
+  register: poll_service
 
 - name: Install Python venv package
   ansible.builtin.apt:
@@ -19,6 +36,12 @@
   with_items:
     - python3-venv
     - acl
+  when: not poll_service.stat.exists
+
+- name: Check if virtual environment exists
+  ansible.builtin.stat:
+    path: /var/www/poll/venv
+  register: venv_directory
 
 - name: Create a virtual environment
   become_user: www-data
@@ -26,17 +49,25 @@
     cmd: python3 -m venv /var/www/poll/venv
   args:
     creates: /var/www/poll/venv
+  when: not venv_directory.stat.exists
+
+- name: Check if requirements.txt exists
+  ansible.builtin.stat:
+    path: /var/www/poll/requirements.txt
+  register: requirements_file
 
 - name: Install Python dependencies
   become_user: www-data
   ansible.builtin.pip:
     requirements: /var/www/poll/requirements.txt
     virtualenv: /var/www/poll/venv
+  when: requirements_file.stat.exists
 
 - name: Upload systemd service file
   ansible.builtin.copy:
     src: ../files/poll.service
     dest: /etc/systemd/system/poll.service
+  when: not poll_service.stat.exists
 
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
@@ -51,7 +82,6 @@
     line: "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}"
     create: yes
     state: present
-  
 
 - name: Ensure service is enabled and running
   ansible.builtin.systemd:

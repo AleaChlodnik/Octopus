@@ -8,29 +8,60 @@
     repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
     state: present
 
+- name: Add PostgreSQL's repository
+  ansible.builtin.apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main
+    state: present
+
 - name: Install PostgreSQL 16
   ansible.builtin.apt:
     name: postgresql-16
     state: present
     update_cache: yes
 
-- name: Install PostgreSQL and other required packages
-  apt:
-    name: "{{ item }}"
-  with_items:
-    - postgresql-client
-    - python3-psycopg2 # psycopg2 is a PostgreSQL adapter for Python
-    - acl # setfacl is a utility for manipulating the access control lists (ACLs) of files
+- name: Install PostgreSQL
+  ansible.builtin.apt:
+    name: postgresql-client
+    state: present
+    update_cache: yes
+
+- name: Install python3-psycopg2
+  ansible.builtin.apt:
+    name: python3-psycopg2
+    state: present
+    update_cache: yes
+
+- name: Install ACL
+  ansible.builtin.apt:
+    name: acl
+    state: present
+    update_cache: yes
+
+- name: Check if pg_hba.conf exists and its content differs
+  ansible.builtin.stat:
+    path: /etc/postgresql/16/main/pg_hba.conf
+  register: pg_hba_conf_status
 
 - name: Setup postgresql authentication
   copy:
     src: ../files/pg_hba.conf
     dest: /etc/postgresql/16/main/pg_hba.conf
+  when: 
+    - pg_hba_conf_status.stat.exists == false
+    - pg_hba_conf_status.stat.md5 != ansible.builtin.file(src='../files/pg_hba.conf').md5
 
-- name: Set up postgresql schema
+- name: Check if schema.sql exists and its content differs
+  ansible.builtin.stat:
+    path: /tmp/schema.sql
+  register: schema_sql_status
+
+- name: Set up PostgreSQL schema
   copy:
     src: ../files/schema.sql
     dest: /tmp/schema.sql
+  when: 
+    - schema_sql_status.stat.exists == false
+    - schema_sql_status.stat.md5 != ansible.builtin.file(src='../files/schema.sql').md5
 
 - name:  start and enable postgresql
   systemd_service:

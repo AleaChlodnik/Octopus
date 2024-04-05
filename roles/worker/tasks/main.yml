@@ -12,33 +12,58 @@
     owner: www-data
     group: www-data
 
+- name: Check if worker.service exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/worker.service
+  register: worker_service
+
 - name: Uploads worker service
   copy:
     src: worker.service
     dest: /etc/systemd/system/worker.service
     mode: 0644
   become: true
+  when: not worker_service.stat.exists
 
-- name: Install maven
-  apt:
+- name: Check if Maven is installed
+  ansible.builtin.stat:
+    path: /usr/bin/mvn
+  register: maven_check
+
+- name: Install Maven
+  ansible.builtin.apt:
     name: maven
     state: present
+    update_cache: yes
+  when: not maven_check.stat.exists
+
+- name: Check if Java 21 installation file exists
+  ansible.builtin.stat:
+    path: /var/www/worker/jdk-21_linux-x64_bin.deb
+  register: java_installation_file
 
 - name: Download Java 21
   ansible.builtin.command: wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
   args:
     chdir: /var/www/worker
+  when: not java_installation_file.stat.exists
 
 - name: Install Java 21
-  command: sudo dpkg -i jdk-21_linux-x64_bin.deb
+  ansible.builtin.command: sudo dpkg -i jdk-21_linux-x64_bin.deb
   args:
     chdir: /var/www/worker
+  when: java_installation_file.stat.exists
+
+- name: Check if the worker has already been built
+  ansible.builtin.stat:
+    path: /var/www/worker/target
+  register: worker_build_check
 
 - name: Build the worker
   ansible.builtin.command: mvn clean install -f /var/www/worker/pom.xml
   args:
     chdir: /var/www/worker/
-
+  when: not worker_build_check.stat.exists
 
 - name: Upload systemd service file
   ansible.builtin.copy:
