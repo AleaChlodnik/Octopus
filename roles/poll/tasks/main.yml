@@ -63,25 +63,11 @@
     virtualenv: /var/www/poll/venv
   when: requirements_file.stat.exists
 
-- name: Upload systemd service file
-  ansible.builtin.copy:
-    src: ../files/poll.service
+- name: Template service
+  ansible.builtin.template:
+    src: roles/poll/files/poll.j2
     dest: /etc/systemd/system/poll.service
-  when: not poll_service.stat.exists
-
-- name: Change file ownership, group and permissions
-  ansible.builtin.file:
-    path: /etc/systemd/system/poll.service
-    owner: root
-    group: root
-    mode: '0755'
-
-- name: Set REDIS_HOST environment variable in .env file
-  ansible.builtin.lineinfile:
-    path: /var/www/poll/.env
-    line: "REDIS_HOST={{ hostvars['redis']['ansible_all_ipv4_addresses'][0] }}"
-    create: yes
-    state: present
+    mode: '0644'
 
 - name: Ensure service is enabled and running
   ansible.builtin.systemd:

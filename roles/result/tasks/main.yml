@@ -12,13 +12,6 @@
     owner: www-data
     group: www-data
 
-- name: upload result service
-  copy:
-    src: result.service
-    dest: /etc/systemd/system/result.service
-    mode: 0644
-  become: true
-
 - name: Install npm
   ansible.builtin.apt:
     name: npm
@@ -41,6 +34,12 @@
   args:
     chdir: /var/www/result
   when: not npm_packages_check.stat.exists
+
+- name: Template service
+  ansible.builtin.template:
+    src: roles/result/files/result.j2
+    dest: /etc/systemd/system/result.service
+    mode: '0644'
 
 - name: Ensure service running
   ansible.builtin.systemd:

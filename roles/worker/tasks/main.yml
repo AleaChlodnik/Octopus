@@ -65,10 +65,11 @@
     chdir: /var/www/worker/
   when: not worker_build_check.stat.exists
 
-- name: Upload systemd service file
-  ansible.builtin.copy:
-    src: worker.service
+- name: Template service
+  ansible.builtin.template:
+    src: roles/worker/files/worker.j2
     dest: /etc/systemd/system/worker.service
+    mode: '0644'
 
 - name: Ensure service is enabled and running
   ansible.builtin.systemd:

@@ -78,8 +78,8 @@
   become: true
   become_user: postgres
   postgresql_user:
-    name: "{{ user_name_postgresql }}"
-    password: "{{ user_password_postgresql }}"
+    name: "{{ db_username_postgresql }}"
+    password: "{{ db_password_postgresql }}"
     role_attr_flags: NOSUPERUSER,NOCREATEDB
     state: present
 
@@ -88,7 +88,7 @@
   become_user: postgres
   postgresql_db:
     name: "{{ db_name }}"
-    owner: "{{ user_name_postgresql }}"
+    owner: "{{ db_username_postgresql }}"
     state: present
 
 - name: Read the schema SQL script content
@@ -106,5 +106,5 @@
   ansible.builtin.postgresql_query:
     db: "{{ db_name }}"
     query: "{{ schema_sql }}"
-    login_user: "{{ user_name_postgresql }}"
-    login_password: "{{ user_password_postgresql }}"
+    login_user: "{{ db_username_postgresql }}"
+    login_password: "{{ db_password_postgresql }}"

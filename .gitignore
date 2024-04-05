@@ -3,3 +3,4 @@ restart.sh
 linode_password
 ssh
 production
+*.vscode
