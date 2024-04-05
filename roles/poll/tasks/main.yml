@@ -13,7 +13,7 @@
 
 - name: Check if poll application has been extracted
   ansible.builtin.stat:
-    path: /var/www/poll/somefile_from_poll_application
+    path: /var/www/poll/requirements.txt
   register: poll_extracted
 
 - name: Extract poll application
@@ -65,7 +65,7 @@
 
 - name: Template service
   ansible.builtin.template:
-    src: roles/poll/files/poll.j2
+    src: ../files/poll.j2
     dest: /etc/systemd/system/poll.service
     mode: '0644'
 
