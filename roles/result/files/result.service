@@ -1,0 +1,12 @@
+[Unit]
+Description=Result Service
+
+[Service]
+Environment=POSTGRES_HOST={{ hostvars['postgresql'].ansible_host }}
+Environment=POSTGRES_PORT={{ db_port }}
+Environment=POSTGRES_DB={{ db_name }}
+Environment=POSTGRES_USER={{ db_username_postgresql }}
+Environment=POSTGRES_PASSWORD={{ db_password_postgresql }}
+ExecStart=node server.js
+WorkingDirectory=/var/www/result
+Restart=on-failure

@@ -1,18 +1,28 @@
-- name: Install Redis
-  ansible.builtin.package:
-    name: redis
+- name: Install redis
+  become: true
+  apt:
+    name: redis-server
     state: present
-  become: true
 
-- name: check if redis.conf exists
-  stat:
-    path: /etc/redis.conf
-  register: redis_conf
-
-- name: setup redis
-  copy:
-    src: redis.conf
-    dest: /etc/redis.conf
-    mode: 0644
+- name: upload systemd service to server
   become: true
-  when: not redis_conf.stat.exists
+  ansible.builtin.template:
+    src: ../files/redis.conf
+    dest: /etc/redis/redis.conf
+  register: override
+
+- name: stop redis
+  become: true
+  systemd:
+    name: redis-server
+    state: stopped
+    enabled: yes
+  when: override.changed
+
+- name: start redis
+  become: true
+  systemd:
+    name: redis-server
+    state: started
+    daemon_reload: yes
+    enabled: yes

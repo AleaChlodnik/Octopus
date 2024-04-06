@@ -67,7 +67,7 @@
 
 - name: Template service
   ansible.builtin.template:
-    src: roles/worker/files/worker.j2
+    src: roles/worker/files/worker.service
     dest: /etc/systemd/system/worker.service
     mode: '0644'
 

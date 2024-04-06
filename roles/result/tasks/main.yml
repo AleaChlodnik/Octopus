@@ -37,7 +37,7 @@
 
 - name: Template service
   ansible.builtin.template:
-    src: roles/result/files/result.j2
+    src: roles/result/files/result.service
     dest: /etc/systemd/system/result.service
     mode: '0644'
 
